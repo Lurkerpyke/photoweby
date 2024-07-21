@@ -1,39 +1,41 @@
-"use client";
+import UploadButton from "./upload-button";
+import cloudinary from "cloudinary";
+import { CloudinaryImage } from "./cloudinary-image";
 
-import { CldUploadButton } from "next-cloudinary";
-import { UploadResult } from "../page";
-import { Button } from "@/components/ui/button";
+type SearchResult = {
+    public_id: string
+}
 
-export default function GalleryPage() {
+export default async function GalleryPage() {
+
+    const results = (await cloudinary.v2.search
+        .expression("resource_type:image")
+        .sort_by("created_at", "desc")
+        .with_field("tags")
+        .max_results(30)
+        .execute()) as {resources: SearchResult[]};
+
     return (
-        <section>
-            <div className="flex justify-between">
-                <h1 className="text-4xl font-bold">Your Web Gallery</h1>
-                <Button asChild>
-                    <div className="flex gap-2">
-                        <svg 
-                            xmlns="http://www.w3.org/2000/svg" 
-                            fill="none" 
-                            viewBox="0 0 24 24" 
-                            strokeWidth={1.5} 
-                            stroke="currentColor" 
-                            className="size-6">
-
-                            <path 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round" 
-                                d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                        </svg>
-
-                        <CldUploadButton
-                            uploadPreset="eevyium1"
-                        // onSuccess={(result: UploadResult) => 
-                        //     // setImageId(result.info.public_id)
-                        // }
+        <section> 
+            <div className="flex flex-col gap-8">
+                <div className="flex justify-between">
+                    <h1 className="text-4xl font-bold">Your Web Gallery</h1>
+                    <UploadButton />
+                </div>
+                <div className="grid grid-cols-4 gap-4">
+                    {results.resources.map(results => (
+                        <CloudinaryImage
+                            width="400"
+                            key={results.public_id}
+                            height="300"
+                            priority
+                            src={results.public_id}
+                            sizes="100vw"
+                            alt="Description of my image"
                         />
-                    </div>
-                </Button>
-            </div>
+                    ))}
+                </div>
+            </div>  
         </section>
-    )
+    );
 }
